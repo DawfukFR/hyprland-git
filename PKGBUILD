@@ -3,7 +3,7 @@
 # Contributor: ThatOneCalculator <kainoa at t1c dot dev>
 
 pkgname=hyprland-git
-pkgver=0.41.2_r4913.gb03f41ef
+pkgver=0.41.2_r4991.gaa02380f
 pkgrel=1
 pkgdesc="A dynamic tiling Wayland compositor based on wlroots that doesn't sacrifice on its looks."
 arch=(x86_64 aarch64)
@@ -95,6 +95,7 @@ prepare() {
   if [[ -z "$(git config --get user.name)" ]]; then
     git config user.name local && git config user.email '<>' && git config commit.gpgsign false
   fi
+
   # Pick pull requests from github using `pick_mr <pull request number>`.
 }
 
