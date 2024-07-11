@@ -3,7 +3,7 @@
 # Contributor: ThatOneCalculator <kainoa at t1c dot dev>
 
 pkgname=hyprland-git
-pkgver=0.41.2.r9.9c5dd59d
+pkgver=0.41.2_r4913.gb03f41ef
 pkgrel=1
 pkgdesc="A dynamic tiling Wayland compositor based on wlroots that doesn't sacrifice on its looks."
 arch=(x86_64 aarch64)
@@ -52,6 +52,7 @@ makedepends=(
   cmake
   gdb
   git
+  aquamarine-git
   hyprwayland-scanner-git
   jq
   make
@@ -70,12 +71,10 @@ provides=("hyprland=${pkgver%%.r*}")
 conflicts=(hyprland)
 source=(
   "git+https://github.com/hyprwm/Hyprland.git"
-  "git+https://github.com/hyprwm/wlroots-hyprland.git"
   "git+https://github.com/hyprwm/hyprland-protocols.git"
   "git+https://github.com/canihavesomecoffee/udis86.git"
 )
 b2sums=(
-  'SKIP'
   'SKIP'
   'SKIP'
   'SKIP'
@@ -88,7 +87,6 @@ pick_mr() {
 prepare() {
   cd Hyprland
   git submodule init
-  git config submodule.subprojects/wlroots-hyprland.url "$srcdir/wlroots-hyprland"
   git config submodule.subprojects/hyprland-protocols.url "$srcdir/hyprland-protocols"
   git config submodule.subprojects/udis86.url "$srcdir/udis86"
   git config submodule.subprojects/tracy.update none
@@ -98,17 +96,16 @@ prepare() {
     git config user.name local && git config user.email '<>' && git config commit.gpgsign false
   fi
   # Pick pull requests from github using `pick_mr <pull request number>`.
-
-  git -C subprojects/wlroots-hyprland reset --hard
 }
 
 pkgver() {
-  git -C Hyprland describe --long --tags | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g'
+  cd Hyprland
+  _ver="$(grep -m1 'version' props.json | cut -d '"' -f4 | tr - .)"
+  echo "${_ver}_r$(git rev-list --count HEAD).g$(git rev-parse --short HEAD)"
 }
 
 build() {
   cd Hyprland
-
   export CXXFLAGS="-w" # suppress all compiler warnings
   meson setup build \
     --wipe \
@@ -118,6 +115,7 @@ build() {
     --wrap-mode nodownload \
     -D warning_level=0 \
     -D b_lto=true \
+    -D b_pch=false \
     -D b_pie=true \
     -D default_library=shared \
     -D xwayland=enabled \
@@ -128,12 +126,9 @@ build() {
 
 package() {
   cd Hyprland
-
   meson install -C build --destdir "$pkgdir"
-
   # FIXME: remove after xdg-desktop-portal-hyprland disowns hyprland-portals.conf
   rm -rf "$pkgdir/usr/share/xdg-desktop-portal"
-
   # license
   install -Dm0644 -t "$pkgdir/usr/share/licenses/${pkgname}" LICENSE
 }
