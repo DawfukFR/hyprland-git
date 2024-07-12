@@ -3,7 +3,7 @@
 # Contributor: ThatOneCalculator <kainoa at t1c dot dev>
 
 pkgname=hyprland-git
-pkgver=0.41.2_r4991.gaa02380f
+pkgver=0.41.2_r4997.gf05f7267
 pkgrel=1
 pkgdesc="A dynamic tiling Wayland compositor based on wlroots that doesn't sacrifice on its looks."
 arch=(x86_64 aarch64)
@@ -70,7 +70,7 @@ optdepends=(
 provides=("hyprland=${pkgver%%.r*}")
 conflicts=(hyprland)
 source=(
-  "git+https://github.com/hyprwm/Hyprland.git"
+  "git+https://github.com/hyprwm/Hyprland.git#branch=aquamarine"
   "git+https://github.com/hyprwm/hyprland-protocols.git"
   "git+https://github.com/canihavesomecoffee/udis86.git"
 )
@@ -107,27 +107,13 @@ pkgver() {
 
 build() {
   cd Hyprland
-  export CXXFLAGS="-w" # suppress all compiler warnings
-  meson setup build \
-    --wipe \
-    --prefix /usr \
-    --libexecdir lib \
-    --buildtype release \
-    --wrap-mode nodownload \
-    -D warning_level=0 \
-    -D b_lto=true \
-    -D b_pch=false \
-    -D b_pie=true \
-    -D default_library=shared \
-    -D xwayland=enabled \
-    -D systemd=enabled
-
-  meson compile -C build
+	cmake -DCMAKE_INSTALL_LIBEXECDIR=/usr/lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -S . -B build -Wno-dev
+	cmake --build build --config Release --target all
 }
 
 package() {
   cd Hyprland
-  meson install -C build --destdir "$pkgdir"
+	DESTDIR="${pkgdir}" cmake --install build
   # FIXME: remove after xdg-desktop-portal-hyprland disowns hyprland-portals.conf
   rm -rf "$pkgdir/usr/share/xdg-desktop-portal"
   # license
